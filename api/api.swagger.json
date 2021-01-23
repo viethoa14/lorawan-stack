@@ -10230,14 +10230,6 @@
         }
       }
     },
-    "ExampleOutput": {
-      "type": "object",
-      "properties": {
-        "data": {
-          "type": "object"
-        }
-      }
-    },
     "FirmwareVersionProfile": {
       "type": "object",
       "properties": {
@@ -10822,7 +10814,7 @@
           "$ref": "#/definitions/ExampleInput"
         },
         "output": {
-          "$ref": "#/definitions/ExampleOutput"
+          "type": "object"
         }
       }
     },
