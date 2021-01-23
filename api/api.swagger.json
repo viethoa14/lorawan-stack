@@ -10217,6 +10217,27 @@
         }
       }
     },
+    "ExampleInput": {
+      "type": "object",
+      "properties": {
+        "f_port": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "frm_payload": {
+          "type": "string",
+          "format": "byte"
+        }
+      }
+    },
+    "ExampleOutput": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "object"
+        }
+      }
+    },
     "FirmwareVersionProfile": {
       "type": "object",
       "properties": {
@@ -10790,6 +10811,20 @@
         "EXACTLY_ONCE"
       ],
       "default": "AT_MOST_ONCE"
+    },
+    "MessagePayloadFormatterExample": {
+      "type": "object",
+      "properties": {
+        "description": {
+          "type": "string"
+        },
+        "input": {
+          "$ref": "#/definitions/ExampleInput"
+        },
+        "output": {
+          "$ref": "#/definitions/ExampleOutput"
+        }
+      }
     },
     "OperatingConditionsLimits": {
       "type": "object",
@@ -14946,6 +14981,13 @@
         "formatter_parameter": {
           "type": "string",
           "description": "Parameter for the formatter, must be set together."
+        },
+        "examples": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/MessagePayloadFormatterExample"
+          },
+          "title": "Examples"
         }
       }
     },
