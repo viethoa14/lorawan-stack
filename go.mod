@@ -48,7 +48,7 @@ require (
 	github.com/felixge/httpsnoop v1.0.1
 	github.com/fsnotify/fsnotify v1.4.9
 	github.com/getsentry/sentry-go v0.6.1
-	github.com/go-redis/redis/v8 v8.3.2
+	github.com/go-redis/redis/v8 v8.6.0
 	github.com/go-sourcemap/sourcemap v2.1.3+incompatible // indirect
 	github.com/gobwas/glob v0.2.3
 	github.com/gogo/protobuf v1.3.1
@@ -113,9 +113,9 @@ require (
 	gocloud.dev v0.20.0
 	gocloud.dev/pubsub/natspubsub v0.19.0
 	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9
-	golang.org/x/net v0.0.0-20201009032441-dbdefad45b89
+	golang.org/x/net v0.0.0-20201021035429-f5854403a974
 	golang.org/x/oauth2 v0.0.0-20200107190931-bf48bf16ab8d
-	golang.org/x/sync v0.0.0-20200317015054-43a5402ce75a
+	golang.org/x/sync v0.0.0-20201020160332-67f06af15bc9
 	google.golang.org/api v0.24.0
 	google.golang.org/genproto v0.0.0-20200513103714-09dca8ec2884
 	google.golang.org/grpc v1.32.0

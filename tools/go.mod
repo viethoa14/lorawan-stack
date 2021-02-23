@@ -38,6 +38,6 @@ require (
 	github.com/mdempsky/unconvert v0.0.0-20200228143138-95ecdbfc0b5f
 	github.com/mgechev/revive v1.0.2
 	go.thethings.network/lorawan-stack/v3 v3.0.0-00010101000000-000000000000
-	golang.org/x/tools v0.0.0-20200710042808-f1c4188a97a1
+	golang.org/x/tools v0.0.0-20201224043029-2b0845dc783e
 	gopkg.in/yaml.v2 v2.3.0
 )
