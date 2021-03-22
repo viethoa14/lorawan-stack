@@ -21,6 +21,18 @@
   z-index: 0
   box-sizing: border-box
 
+  &.inline
+    height: $default-input-height
+
+    &.focus
+      border-color: $c-active-blue
+
+    &.error
+      border-color: $c-error
+
+    :global .ace_marker-layer .ace_active-line
+      background: transparent
+
   &.focus
     :global .ace-ttn
       .ace_marker-layer .ace_active-line

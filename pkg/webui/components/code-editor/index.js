@@ -1,4 +1,4 @@
-// Copyright © 2019 The Things Network Foundation, The Things Industries B.V.
+// Copyright © 2021 The Things Network Foundation, The Things Industries B.V.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -25,15 +25,20 @@ import './ttn-theme'
 
 import style from './code-editor.styl'
 
+const scrollMargin = [6, 6, 0, 0]
+
 class CodeEditor extends React.Component {
   static propTypes = {
     className: PropTypes.string,
     /** New commands to add to the editor, see official docs. */
     commands: PropTypes.arrayOf(PropTypes.shape({})),
-    /** See `https://github.com/ajaxorg/ace/wiki/Configuring-Ace`. */
     editorOptions: PropTypes.shape({}),
+    /** See `https://github.com/ajaxorg/ace/wiki/Configuring-Ace`. */
+    error: PropTypes.bool,
     /** The height of the editor. */
     height: PropTypes.string,
+    /** A flag identifying whether the code editor is used in inline mode. */
+    inline: PropTypes.bool,
     /** The language to highlight. */
     language: PropTypes.oneOf(['javascript', 'json']),
     /** Maximum lines of code allowed. */
@@ -45,7 +50,6 @@ class CodeEditor extends React.Component {
     onBlur: PropTypes.func,
     onChange: PropTypes.func,
     onFocus: PropTypes.func,
-    /** The default value of the editor. */
     placeholder: PropTypes.string,
     /** A flag identifying whether the editor is editable. */
     readOnly: PropTypes.bool,
@@ -53,8 +57,9 @@ class CodeEditor extends React.Component {
      * the value has been updated, useful for logging use cases.
      */
     scrollToBottom: PropTypes.bool,
-    showGutter: PropTypes.bool,
     /** The current value of the editor. */
+    showGutter: PropTypes.bool,
+    /** The default value of the editor. */
     value: PropTypes.string,
   }
 
@@ -74,6 +79,8 @@ class CodeEditor extends React.Component {
     scrollToBottom: false,
     showGutter: true,
     value: '',
+    inline: false,
+    error: false,
   }
 
   constructor(props) {
@@ -129,6 +136,8 @@ class CodeEditor extends React.Component {
       minLines,
       maxLines,
       commands,
+      inline,
+      error,
     } = this.props
 
     const { focus } = this.state
@@ -139,13 +148,15 @@ class CodeEditor extends React.Component {
     const editorCls = classnames(className, style.wrapper, {
       [style.focus]: focus,
       [style.readOnly]: readOnly,
+      [style.inline]: inline,
+      [style.error]: error,
     })
 
     const options = {
       tabSize: 2,
       useSoftTabs: true,
       fontFamily: '"IBM Plex Mono", Consolas, Monaco, "Andale Mono", "Ubuntu Mono", monospace',
-      fontSize: '13px',
+      fontSize: '14px',
       highlightSelectedWord: true,
       displayIndentGuides: true,
       showFoldWidgets: false,
@@ -158,14 +169,14 @@ class CodeEditor extends React.Component {
         <ReactAce
           // Rendered options.
           theme="ttn"
-          minLines={minLines}
-          maxLines={maxLines}
+          minLines={inline ? 1 : minLines}
+          maxLines={inline ? 1 : maxLines}
           // Session options.
           mode={language}
           // Editor options.
           readOnly={readOnly}
           highlightActiveLine
-          showGutter={showGutter}
+          showGutter={inline ? false : showGutter}
           // Other props.
           name={name}
           onChange={onChange}
@@ -179,6 +190,7 @@ class CodeEditor extends React.Component {
           editorProps={{ $blockScrolling: Infinity }}
           commands={commands}
           ref={this.aceRef}
+          scrollMargin={scrollMargin}
         />
       </div>
     )

@@ -21,6 +21,7 @@ import { storiesOf } from '@storybook/react'
 import CodeEditor from '.'
 
 const containerStyles = { height: '500px' }
+const inlineContainerStyles = { height: '50px' }
 
 @bind
 class Example extends React.Component {
@@ -37,9 +38,11 @@ class Example extends React.Component {
   }
 
   render() {
+    const { inline } = this.props
     const { value } = this.state
+
     return (
-      <div style={containerStyles}>
+      <div style={inline ? inlineContainerStyles : containerStyles}>
         <CodeEditor {...this.props} onChange={this.onChange} value={value} />
       </div>
     )
@@ -61,10 +64,17 @@ function Decoder(bytes, port) {
   return decoded;
 }
 `
+const inlineCode = `{ "temperature": 23.4, "battery": 2500 }`
 
 storiesOf('CodeEditor', module)
   .add('Default', () => (
     <Example language="javascript" name="storybook-code-editor" placeholder={code} />
+  ))
+  .add('Inline', () => (
+    <div>
+      <Example language="json" name="storybook-code-editor" inline placeholder={inlineCode} />
+      <Example language="json" name="storybook-code-editor" inline error placeholder={inlineCode} />
+    </div>
   ))
   .add('Readonly', () => (
     <Example language="javascript" name="storybook-code-editor" placeholder={code} readOnly />
