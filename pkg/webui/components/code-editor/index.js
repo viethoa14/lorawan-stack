@@ -165,7 +165,7 @@ class CodeEditor extends React.Component {
     }
 
     return (
-      <div className={editorCls} data-test-id="code-editor">
+      <div className={editorCls} data-test-id={`code-editor-${name}`}>
         <ReactAce
           // Rendered options.
           theme="ttn"

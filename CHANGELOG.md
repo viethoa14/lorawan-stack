@@ -27,6 +27,7 @@ For details about compatibility between different releases, see the **Commitment
 - Support LoRa 2.4 GHz with Packet Broker.
 - Include gateway identifiers from Packet Broker in metadata.
 - Session and MAC state import functionality. This means that devices can be migrated without rejoin.
+- Payload formatter testing functionality in the Console.
 
 ### Changed
 

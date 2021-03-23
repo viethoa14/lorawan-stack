@@ -18,6 +18,8 @@ import { connect } from 'react-redux'
 
 import PAYLOAD_FORMATTER_TYPES from '@console/constants/formatter-types'
 
+import api from '@console/api'
+
 import Breadcrumb from '@ttn-lw/components/breadcrumbs/breadcrumb'
 import { withBreadcrumb } from '@ttn-lw/components/breadcrumbs/context'
 import toast from '@ttn-lw/components/toast'
@@ -30,12 +32,18 @@ import sharedMessages from '@ttn-lw/lib/shared-messages'
 import PropTypes from '@ttn-lw/lib/prop-types'
 import attachPromise from '@ttn-lw/lib/store/actions/attach-promise'
 
+import { base64ToHex } from '@console/lib/bytes'
+
 import { updateDevice } from '@console/store/actions/devices'
 
-import { selectSelectedApplicationId } from '@console/store/selectors/applications'
+import {
+  selectSelectedApplicationId,
+  selectApplicationLink,
+} from '@console/store/selectors/applications'
 import {
   selectSelectedDeviceId,
   selectSelectedDeviceFormatters,
+  selectSelectedDevice,
 } from '@console/store/selectors/devices'
 
 @connect(
@@ -45,7 +53,10 @@ import {
     return {
       appId: selectSelectedApplicationId(state),
       devId: selectSelectedDeviceId(state),
+      device: selectSelectedDevice(state),
+      link: selectApplicationLink(state),
       formatters,
+      encodeDownlink: api.as.encodeDownlink,
     }
   },
   { updateDevice: attachPromise(updateDevice) },
@@ -64,7 +75,15 @@ class DevicePayloadFormatters extends React.PureComponent {
   static propTypes = {
     appId: PropTypes.string.isRequired,
     devId: PropTypes.string.isRequired,
+    device: PropTypes.device.isRequired,
+    encodeDownlink: PropTypes.func.isRequired,
     formatters: PropTypes.formatters,
+    link: PropTypes.shape({
+      default_formatters: PropTypes.shape({
+        down_formatter: PropTypes.string,
+        down_formatter_parameter: PropTypes.string,
+      }),
+    }).isRequired,
     updateDevice: PropTypes.func.isRequired,
   }
 
@@ -104,13 +123,42 @@ class DevicePayloadFormatters extends React.PureComponent {
     })
   }
 
+  @bind
+  async onTestSubmit(data, decode) {
+    const { appId, devId, encodeDownlink, device } = this.props
+    const { f_port, payload, formatter, parameter } = data
+    const { version_ids } = device
+
+    const { downlink } = await encodeDownlink(appId, devId, {
+      downlink: {
+        f_port,
+        decoded_payload: JSON.parse(payload),
+      },
+      version_ids: Object.keys(version_ids).length > 0 ? version_ids : undefined,
+      formatter,
+      parameter,
+    })
+
+    return {
+      payload: base64ToHex(downlink.frm_payload || ''),
+      warnings: downlink.decoded_payload_warnings,
+    }
+  }
+
   render() {
-    const { formatters } = this.props
+    const { formatters, link } = this.props
+    const { default_formatters = {} } = link
 
     const formatterType = Boolean(formatters)
       ? formatters.down_formatter || PAYLOAD_FORMATTER_TYPES.NONE
       : PAYLOAD_FORMATTER_TYPES.DEFAULT
     const formatterParameter = Boolean(formatters) ? formatters.down_formatter_parameter : undefined
+    const appFormatterType = Boolean(default_formatters.down_formatter)
+      ? default_formatters.down_formatter
+      : PAYLOAD_FORMATTER_TYPES.NONE
+    const appFormatterParameter = Boolean(default_formatters.down_formatter_parameter)
+      ? default_formatters.down_formatter_parameter
+      : undefined
 
     return (
       <React.Fragment>
@@ -119,11 +167,15 @@ class DevicePayloadFormatters extends React.PureComponent {
           uplink={false}
           linked
           allowReset
+          allowTest
           onSubmit={this.onSubmit}
           onSubmitSuccess={this.onSubmitSuccess}
+          onTestSubmit={this.onTestSubmit}
           title={sharedMessages.payloadFormattersDownlink}
           initialType={formatterType}
           initialParameter={formatterParameter}
+          defaultType={appFormatterType}
+          defaultParameter={appFormatterParameter}
         />
       </React.Fragment>
     )
