@@ -27,6 +27,7 @@ import PropTypes from '@ttn-lw/lib/prop-types'
 import FormContext from './context'
 import FormField from './field'
 import FormInfoField from './field/info'
+import FormFieldContainer from './field/container'
 import FormSubmit from './submit'
 import FormCollapseSection from './section'
 import FormSubTitle from './sub-title'
@@ -234,6 +235,7 @@ class Form extends React.PureComponent {
 
 Form.Field = FormField
 Form.InfoField = FormInfoField
+Form.FieldContainer = FormFieldContainer
 Form.Submit = FormSubmit
 Form.CollapseSection = FormCollapseSection
 Form.SubTitle = FormSubTitle
