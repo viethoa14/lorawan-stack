@@ -44,8 +44,7 @@ const m = defineMessages({
   formatterParameter: 'Formatter parameter',
   grpcFieldDescription: 'The address of the service to connect to',
   appFormatter: 'Use application payload formatter',
-  appFormatterWarning:
-    'This option sets both uplink and downlink formatters to application link defaults',
+  appFormatterWarning: 'This option will affects both uplink and downlink formatter',
   setupSubTitle: 'Setup',
 })
 
@@ -273,7 +272,9 @@ class PayloadFormattersForm extends React.Component {
               component={Select}
               options={options}
               onChange={this.onTypeChange}
-              warning={type === TYPES.DEFAULT ? m.appFormatterWarning : undefined}
+              warning={
+                type === TYPES.DEFAULT || type === TYPES.NONE ? m.appFormatterWarning : undefined
+              }
               inputWidth="m"
               required
             />
