@@ -21,6 +21,7 @@ import SubmitButton from '@ttn-lw/components/submit-button'
 import CodeEditor from '@ttn-lw/components/code-editor'
 import Icon from '@ttn-lw/components/icon'
 import Input from '@ttn-lw/components/input'
+import SubmitBar from '@ttn-lw/components/submit-bar'
 
 import Message from '@ttn-lw/lib/components/message'
 import ErrorMessage from '@ttn-lw/lib/components/error-message'
@@ -107,25 +108,26 @@ const TestForm = props => {
         validationContext={validationContext}
       >
         <Form.SubTitle title={m.testSubTitle} />
-        {uplink ? (
-          <Form.Field
-            title={m.bytePayload}
-            name="payload"
-            type="byte"
-            component={Input}
-            unbounded
-          />
-        ) : (
-          <Form.Field
-            title={m.jsonPayload}
-            language="json"
-            name="payload"
-            component={CodeEditor}
-            minLines={10}
-            maxLines={10}
-          />
-        )}
-        <div className={style.submitSection}>
+        <Form.FieldContainer horizontal>
+          {uplink ? (
+            <Form.Field
+              title={m.bytePayload}
+              name="payload"
+              type="byte"
+              component={Input}
+              className={style.payload}
+              unbounded
+            />
+          ) : (
+            <Form.Field
+              title={m.jsonPayload}
+              language="json"
+              name="payload"
+              component={CodeEditor}
+              minLines={14}
+              maxLines={14}
+            />
+          )}
           <Form.Field
             className={style.fPort}
             inputWidth="xxs"
@@ -135,42 +137,45 @@ const TestForm = props => {
             component={Input}
             min={1}
             max={223}
+            autoWidth
           />
+        </Form.FieldContainer>
+        <hr className={style.hRule} />
+        <div
+          className={classnames(style.infoSection, {
+            [style.infoSectionError]: showTestError,
+            [style.infoSectionWarning]: showTestWarning,
+            [style.infoSectionValid]: showTestValid,
+          })}
+        >
+          <Icon className={style.icon} icon={infoIcon} nudgeUp />
+          {showTestError ? (
+            <ErrorMessage className={style.message} content={infoMessage} />
+          ) : (
+            <Message className={style.message} content={infoMessage} />
+          )}
+        </div>
+        {uplink ? (
+          <CodeEditor
+            value={hasPayload ? JSON.stringify(payload, null, 2) : undefined}
+            language="json"
+            name="test_result"
+            minLines={14}
+            maxLines={14}
+            readOnly
+            showGutter={false}
+          />
+        ) : (
+          <Input value={hasPayload ? payload : undefined} type="byte" unbounded readOnly />
+        )}
+        <SubmitBar>
           <Form.Submit
             component={SubmitButton}
             message={uplink ? m.testDecoder : m.testEncoder}
             secondary
           />
-        </div>
+        </SubmitBar>
       </Form>
-      <hr className={style.hRule} />
-      <div
-        className={classnames(style.infoSection, {
-          [style.infoSectionError]: showTestError,
-          [style.infoSectionWarning]: showTestWarning,
-          [style.infoSectionValid]: showTestValid,
-        })}
-      >
-        <Icon className={style.icon} icon={infoIcon} nudgeUp />
-        {showTestError ? (
-          <ErrorMessage className={style.message} content={infoMessage} />
-        ) : (
-          <Message className={style.message} content={infoMessage} />
-        )}
-      </div>
-      {uplink ? (
-        <CodeEditor
-          value={hasPayload ? JSON.stringify(payload, null, 2) : undefined}
-          language="json"
-          name="test_result"
-          minLines={10}
-          maxLines={10}
-          readOnly
-          showGutter={false}
-        />
-      ) : (
-        <Input value={hasPayload ? payload : undefined} type="byte" unbounded readOnly />
-      )}
     </div>
   )
 }
