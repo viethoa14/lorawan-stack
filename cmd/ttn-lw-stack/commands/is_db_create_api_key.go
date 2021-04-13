@@ -46,13 +46,13 @@ var (
 				return err
 			}
 			name, _ := cmd.Flags().GetString("name")
-
+			expiry, _ := cmd.Flags().GetString("expiry")
 			usr := &ttnpb.User{
 				UserIdentifiers: ttnpb.UserIdentifiers{UserID: userID},
 			}
 			rights := []ttnpb.Right{ttnpb.RIGHT_ALL}
 			apiKeyStore := store.GetAPIKeyStore(db)
-			key, token, err := is.GenerateAPIKey(ctx, name, rights...)
+			key, token, err := is.GenerateAPIKey(ctx, name, expiry, rights...)
 			if err != nil {
 				return err
 			}
@@ -74,5 +74,6 @@ var (
 func init() {
 	createAPIKeyCommand.Flags().String("user-id", "admin", "User ID")
 	createAPIKeyCommand.Flags().String("name", "admin-api-key", "API key name")
+	createAPIKeyCommand.Flags().String("expiry", "", "API key expiry date (YYYY-MM-DD)")
 	isDBCommand.AddCommand(createAPIKeyCommand)
 }
