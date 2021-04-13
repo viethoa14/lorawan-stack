@@ -11334,6 +11334,10 @@
         "updated_at": {
           "type": "string",
           "format": "date-time"
+        },
+        "expires_at": {
+          "type": "string",
+          "format": "date-time"
         }
       }
     },
@@ -12733,6 +12737,9 @@
           "items": {
             "$ref": "#/definitions/v3Right"
           }
+        },
+        "expiry": {
+          "type": "string"
         }
       }
     },
@@ -12782,6 +12789,9 @@
           "items": {
             "$ref": "#/definitions/v3Right"
           }
+        },
+        "expiry": {
+          "type": "string"
         }
       }
     },
@@ -12820,6 +12830,9 @@
           "items": {
             "$ref": "#/definitions/v3Right"
           }
+        },
+        "expiry": {
+          "type": "string"
         }
       }
     },
@@ -12849,6 +12862,9 @@
           "items": {
             "$ref": "#/definitions/v3Right"
           }
+        },
+        "expiry": {
+          "type": "string"
         }
       }
     },

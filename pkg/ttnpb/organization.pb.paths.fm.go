@@ -129,6 +129,7 @@ var GetOrganizationAPIKeyRequestFieldPathsTopLevel = []string{
 	"organization_ids",
 }
 var CreateOrganizationAPIKeyRequestFieldPathsNested = []string{
+	"expiry",
 	"name",
 	"organization_ids",
 	"organization_ids.organization_id",
@@ -136,6 +137,7 @@ var CreateOrganizationAPIKeyRequestFieldPathsNested = []string{
 }
 
 var CreateOrganizationAPIKeyRequestFieldPathsTopLevel = []string{
+	"expiry",
 	"name",
 	"organization_ids",
 	"rights",
@@ -143,6 +145,7 @@ var CreateOrganizationAPIKeyRequestFieldPathsTopLevel = []string{
 var UpdateOrganizationAPIKeyRequestFieldPathsNested = []string{
 	"api_key",
 	"api_key.created_at",
+	"api_key.expires_at",
 	"api_key.id",
 	"api_key.key",
 	"api_key.name",

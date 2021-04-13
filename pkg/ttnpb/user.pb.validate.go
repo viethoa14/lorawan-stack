@@ -1385,6 +1385,15 @@ func (m *CreateUserAPIKeyRequest) ValidateFields(paths ...string) error {
 
 			}
 
+		case "expiry":
+
+			if !_CreateUserAPIKeyRequest_Expiry_Pattern.MatchString(m.GetExpiry()) {
+				return CreateUserAPIKeyRequestValidationError{
+					field:  "expiry",
+					reason: "value does not match regex pattern \"^\\\\d{4}\\\\-(0?[1-9]|1[012])\\\\-(0?[1-9]|[12][0-9]|3[01])$\"",
+				}
+			}
+
 		default:
 			return CreateUserAPIKeyRequestValidationError{
 				field:  name,
@@ -1450,6 +1459,8 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = CreateUserAPIKeyRequestValidationError{}
+
+var _CreateUserAPIKeyRequest_Expiry_Pattern = regexp.MustCompile("^\\d{4}\\-(0?[1-9]|1[012])\\-(0?[1-9]|[12][0-9]|3[01])$")
 
 // ValidateFields checks the field values on UpdateUserAPIKeyRequest with the
 // rules defined in the proto definition for this message. If any rules are

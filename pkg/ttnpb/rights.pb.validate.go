@@ -194,6 +194,18 @@ func (m *APIKey) ValidateFields(paths ...string) error {
 				}
 			}
 
+		case "expires_at":
+
+			if v, ok := interface{}(m.GetExpiresAt()).(interface{ ValidateFields(...string) error }); ok {
+				if err := v.ValidateFields(subs...); err != nil {
+					return APIKeyValidationError{
+						field:  "expires_at",
+						reason: "embedded message failed validation",
+						cause:  err,
+					}
+				}
+			}
+
 		default:
 			return APIKeyValidationError{
 				field:  name,

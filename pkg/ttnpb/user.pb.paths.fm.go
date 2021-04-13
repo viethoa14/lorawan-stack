@@ -205,6 +205,7 @@ var GetUserAPIKeyRequestFieldPathsTopLevel = []string{
 	"user_ids",
 }
 var CreateUserAPIKeyRequestFieldPathsNested = []string{
+	"expiry",
 	"name",
 	"rights",
 	"user_ids",
@@ -213,6 +214,7 @@ var CreateUserAPIKeyRequestFieldPathsNested = []string{
 }
 
 var CreateUserAPIKeyRequestFieldPathsTopLevel = []string{
+	"expiry",
 	"name",
 	"rights",
 	"user_ids",
@@ -220,6 +222,7 @@ var CreateUserAPIKeyRequestFieldPathsTopLevel = []string{
 var UpdateUserAPIKeyRequestFieldPathsNested = []string{
 	"api_key",
 	"api_key.created_at",
+	"api_key.expires_at",
 	"api_key.id",
 	"api_key.key",
 	"api_key.name",

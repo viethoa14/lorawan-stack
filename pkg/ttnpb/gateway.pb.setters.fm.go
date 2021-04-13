@@ -1055,6 +1055,16 @@ func (dst *CreateGatewayAPIKeyRequest) SetFields(src *CreateGatewayAPIKeyRequest
 			} else {
 				dst.Rights = nil
 			}
+		case "expiry":
+			if len(subs) > 0 {
+				return fmt.Errorf("'expiry' has no subfields, but %s were specified", subs)
+			}
+			if src != nil {
+				dst.Expiry = src.Expiry
+			} else {
+				var zero string
+				dst.Expiry = zero
+			}
 
 		default:
 			return fmt.Errorf("invalid field: '%s'", name)

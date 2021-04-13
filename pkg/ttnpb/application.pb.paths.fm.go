@@ -131,18 +131,21 @@ var GetApplicationAPIKeyRequestFieldPathsTopLevel = []string{
 var CreateApplicationAPIKeyRequestFieldPathsNested = []string{
 	"application_ids",
 	"application_ids.application_id",
+	"expiry",
 	"name",
 	"rights",
 }
 
 var CreateApplicationAPIKeyRequestFieldPathsTopLevel = []string{
 	"application_ids",
+	"expiry",
 	"name",
 	"rights",
 }
 var UpdateApplicationAPIKeyRequestFieldPathsNested = []string{
 	"api_key",
 	"api_key.created_at",
+	"api_key.expires_at",
 	"api_key.id",
 	"api_key.key",
 	"api_key.name",
