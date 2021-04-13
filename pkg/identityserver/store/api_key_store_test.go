@@ -53,6 +53,10 @@ func TestAPIKeyStore(t *testing.T) {
 		s.createEntity(ctx, &Gateway{GatewayID: "test-gtw"})
 		gtwIDs := &ttnpb.GatewayIdentifiers{GatewayID: "test-gtw"}
 
+		expiryTime := time.Now().Add(24 * time.Hour)
+		expiryTimeString := expiryTime.Format("2006-01-02")
+		expiryTimeValue, _ := time.Parse("2006-01-02", expiryTimeString)
+
 		for _, tt := range []struct {
 			Name        string
 			Identifiers ttnpb.Identifiers
@@ -83,12 +87,12 @@ func TestAPIKeyStore(t *testing.T) {
 				a := assertions.New(t)
 
 				key := &ttnpb.APIKey{
-					ID:     strings.ToUpper(fmt.Sprintf("%sKEYID", tt.Name)),
-					Key:    strings.ToUpper(fmt.Sprintf("%sKEY", tt.Name)),
-					Name:   fmt.Sprintf("%s API key", tt.Name),
-					Rights: tt.Rights,
+					ID:        strings.ToUpper(fmt.Sprintf("%sKEYID", tt.Name)),
+					Key:       strings.ToUpper(fmt.Sprintf("%sKEY", tt.Name)),
+					Name:      fmt.Sprintf("%s API key", tt.Name),
+					Rights:    tt.Rights,
+					ExpiresAt: &expiryTimeValue,
 				}
-
 				created, err := store.CreateAPIKey(ctx, tt.Identifiers, key)
 
 				a.So(err, should.BeNil)
@@ -99,6 +103,7 @@ func TestAPIKeyStore(t *testing.T) {
 					a.So(created.Rights, should.Resemble, key.Rights)
 					a.So(created.CreatedAt, should.HappenAfter, time.Now().Add(-1*time.Hour))
 					a.So(created.UpdatedAt, should.HappenAfter, time.Now().Add(-1*time.Hour))
+					a.So(*created.ExpiresAt, should.Equal, expiryTimeValue)
 				}
 
 				keys, err := store.FindAPIKeys(ctx, tt.Identifiers)

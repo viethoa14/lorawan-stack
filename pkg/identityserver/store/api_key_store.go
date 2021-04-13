@@ -45,6 +45,7 @@ func (s *apiKeyStore) CreateAPIKey(ctx context.Context, entityID ttnpb.Identifie
 		Name:       key.Name,
 		EntityID:   entity.PrimaryKey(),
 		EntityType: entityTypeForID(entityID),
+		ExpiresAt:  key.ExpiresAt,
 	}
 	if err = s.createEntity(ctx, model); err != nil {
 		return nil, err
