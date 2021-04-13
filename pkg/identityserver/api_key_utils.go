@@ -16,9 +16,11 @@ package identityserver
 
 import (
 	"context"
+	"time"
 
 	"go.thethings.network/lorawan-stack/v3/pkg/auth"
 	"go.thethings.network/lorawan-stack/v3/pkg/auth/pbkdf2"
+	"go.thethings.network/lorawan-stack/v3/pkg/errors"
 	"go.thethings.network/lorawan-stack/v3/pkg/ttnpb"
 )
 
@@ -29,8 +31,22 @@ var apiKeyHashSettings auth.HashValidator = pbkdf2.PBKDF2{
 	SaltLength: 16,
 }
 
+var errExpiryDateInPast = errors.DefineInvalidArgument("expiry_date_invalid", "expiry date is in the past")
+var errInvalidDateFormat = errors.DefineInvalidArgument("expiry_date_format_invalid", "invalid expiry date format (use YYYY-MM-DD)")
+
+func parseAndValidateAPIKeyExpiry(expiry string) (*time.Time, error) {
+	expiryDate, err := time.Parse("2006-01-02", expiry)
+	if err != nil {
+		return nil, errInvalidDateFormat
+	}
+	if expiryDate.Before(time.Now()) {
+		return nil, errExpiryDateInPast
+	}
+	return &expiryDate, nil
+}
+
 // GenerateAPIKey generates a new API key with the given name for the set of rights
-func GenerateAPIKey(ctx context.Context, name string, rights ...ttnpb.Right) (key *ttnpb.APIKey, token string, err error) {
+func GenerateAPIKey(ctx context.Context, name string, expiry string, rights ...ttnpb.Right) (key *ttnpb.APIKey, token string, err error) {
 	token, err = auth.APIKey.Generate(ctx, "")
 	if err != nil {
 		return nil, "", err
@@ -43,11 +59,25 @@ func GenerateAPIKey(ctx context.Context, name string, rights ...ttnpb.Right) (ke
 	if err != nil {
 		return nil, "", err
 	}
-	key = &ttnpb.APIKey{
-		ID:     generatedID,
-		Key:    hashedKey,
-		Name:   name,
-		Rights: rights,
+	if expiry != "" {
+		expiryDate, err := parseAndValidateAPIKeyExpiry(expiry)
+		if err != nil {
+			return nil, "", err
+		}
+		key = &ttnpb.APIKey{
+			ID:        generatedID,
+			Key:       hashedKey,
+			Name:      name,
+			Rights:    rights,
+			ExpiresAt: expiryDate,
+		}
+	} else {
+		key = &ttnpb.APIKey{
+			ID:     generatedID,
+			Key:    hashedKey,
+			Name:   name,
+			Rights: rights,
+		}
 	}
 	return key, token, nil
 }
