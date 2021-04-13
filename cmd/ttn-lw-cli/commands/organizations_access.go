@@ -250,6 +250,8 @@ var (
 				return errNoAPIKeyRights
 			}
 
+			expiry, _ := cmd.Flags().GetString("expiry")
+
 			is, err := api.Dial(ctx, config.IdentityServerGRPCAddress)
 			if err != nil {
 				return err
@@ -258,6 +260,7 @@ var (
 				OrganizationIdentifiers: *orgID,
 				Name:                    name,
 				Rights:                  rights,
+				Expiry:                  expiry,
 			})
 			if err != nil {
 				return err
@@ -375,6 +378,7 @@ func init() {
 	organizationAPIKeys.AddCommand(organizationAPIKeysGet)
 	organizationAPIKeysCreate.Flags().String("name", "", "")
 	organizationAPIKeysCreate.Flags().AddFlagSet(organizationRightsFlags)
+	organizationAPIKeysCreate.Flags().String("expiry", "", "API key expiry date (YYYY-MM-DD)")
 	organizationAPIKeys.AddCommand(organizationAPIKeysCreate)
 	organizationAPIKeysUpdate.Flags().String("api-key-id", "", "")
 	organizationAPIKeysUpdate.Flags().String("name", "", "")

@@ -250,6 +250,8 @@ var (
 				return errNoAPIKeyRights
 			}
 
+			expiry, _ := cmd.Flags().GetString("expiry")
+
 			is, err := api.Dial(ctx, config.IdentityServerGRPCAddress)
 			if err != nil {
 				return err
@@ -258,6 +260,7 @@ var (
 				GatewayIdentifiers: *gtwID,
 				Name:               name,
 				Rights:             rights,
+				Expiry:             expiry,
 			})
 			if err != nil {
 				return err
@@ -370,6 +373,7 @@ func init() {
 	gatewayAPIKeys.AddCommand(gatewayAPIKeysGet)
 	gatewayAPIKeysCreate.Flags().String("name", "", "")
 	gatewayAPIKeysCreate.Flags().AddFlagSet(gatewayRightsFlags)
+	gatewayAPIKeysCreate.Flags().String("expiry", "", "API key expiry date (YYYY-MM-DD)")
 	gatewayAPIKeys.AddCommand(gatewayAPIKeysCreate)
 	gatewayAPIKeysUpdate.Flags().String("api-key-id", "", "")
 	gatewayAPIKeysUpdate.Flags().String("name", "", "")

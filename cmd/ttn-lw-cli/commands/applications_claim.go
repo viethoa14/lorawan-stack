@@ -38,15 +38,25 @@ key is provided, a new API key will be created.`,
 				return errNoApplicationID
 			}
 
+			expiry, _ := cmd.Flags().GetString("expiry")
+
 			key, _ := cmd.Flags().GetString("api-key")
 			if key == "" {
+				is, err := api.Dial(ctx, config.IdentityServerGRPCAddress)
+				if err != nil {
+					return err
+				}
 				logger.Info("Creating API key")
-				apiKey, err := createApplicationAPIKey(ctx, *appID, "Device Claiming",
-					ttnpb.RIGHT_APPLICATION_DEVICES_READ,
-					ttnpb.RIGHT_APPLICATION_DEVICES_READ_KEYS,
-					ttnpb.RIGHT_APPLICATION_DEVICES_WRITE,
-					ttnpb.RIGHT_APPLICATION_DEVICES_WRITE_KEYS,
-				)
+				apiKey, err := ttnpb.NewApplicationAccessClient(is).CreateAPIKey(ctx, &ttnpb.CreateApplicationAPIKeyRequest{
+					ApplicationIdentifiers: *appID,
+					Name:                   "Device Claiming",
+					Rights: []ttnpb.Right{ttnpb.RIGHT_APPLICATION_DEVICES_READ,
+						ttnpb.RIGHT_APPLICATION_DEVICES_READ_KEYS,
+						ttnpb.RIGHT_APPLICATION_DEVICES_WRITE,
+						ttnpb.RIGHT_APPLICATION_DEVICES_WRITE_KEYS},
+					Expiry: expiry,
+				})
+
 				if err != nil {
 					return err
 				}
@@ -88,6 +98,7 @@ key is provided, a new API key will be created.`,
 
 func init() {
 	applicationClaimAuthorize.Flags().String("api-key", "", "")
+	applicationClaimAuthorize.Flags().String("expiry", "", "API key expiry date (YYYY-MM-DD)")
 	applicationClaim.AddCommand(applicationClaimAuthorize)
 	applicationClaim.AddCommand(applicationClaimUnauthorize)
 	applicationClaim.PersistentFlags().AddFlagSet(applicationIDFlags())

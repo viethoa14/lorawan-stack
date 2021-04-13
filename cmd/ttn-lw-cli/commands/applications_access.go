@@ -15,7 +15,6 @@
 package commands
 
 import (
-	"context"
 	"os"
 	"strings"
 
@@ -24,18 +23,6 @@ import (
 	"go.thethings.network/lorawan-stack/v3/cmd/ttn-lw-cli/internal/api"
 	"go.thethings.network/lorawan-stack/v3/pkg/ttnpb"
 )
-
-func createApplicationAPIKey(ctx context.Context, ids ttnpb.ApplicationIdentifiers, name string, rights ...ttnpb.Right) (*ttnpb.APIKey, error) {
-	is, err := api.Dial(ctx, config.IdentityServerGRPCAddress)
-	if err != nil {
-		return nil, err
-	}
-	return ttnpb.NewApplicationAccessClient(is).CreateAPIKey(ctx, &ttnpb.CreateApplicationAPIKeyRequest{
-		ApplicationIdentifiers: ids,
-		Name:                   name,
-		Rights:                 rights,
-	})
-}
 
 var (
 	applicationRights = &cobra.Command{
@@ -263,11 +250,21 @@ var (
 				return errNoAPIKeyRights
 			}
 
-			res, err := createApplicationAPIKey(ctx, *appID, name, rights...)
+			expiry, _ := cmd.Flags().GetString("expiry")
+
+			is, err := api.Dial(ctx, config.IdentityServerGRPCAddress)
 			if err != nil {
 				return err
 			}
-
+			res, err := ttnpb.NewApplicationAccessClient(is).CreateAPIKey(ctx, &ttnpb.CreateApplicationAPIKeyRequest{
+				ApplicationIdentifiers: *appID,
+				Name:                   name,
+				Rights:                 rights,
+				Expiry:                 expiry,
+			})
+			if err != nil {
+				return err
+			}
 			logger.Infof("API key ID: %s", res.ID)
 			logger.Infof("API key value: %s", res.Key)
 			logger.Warn("The API key value will never be shown again")
@@ -375,6 +372,7 @@ func init() {
 	applicationAPIKeys.AddCommand(applicationAPIKeysGet)
 	applicationAPIKeysCreate.Flags().String("name", "", "")
 	applicationAPIKeysCreate.Flags().AddFlagSet(applicationRightsFlags)
+	applicationAPIKeysCreate.Flags().String("expiry", "", "API key expiry date (YYYY-MM-DD)")
 	applicationAPIKeys.AddCommand(applicationAPIKeysCreate)
 	applicationAPIKeysUpdate.Flags().String("api-key-id", "", "")
 	applicationAPIKeysUpdate.Flags().String("name", "", "")

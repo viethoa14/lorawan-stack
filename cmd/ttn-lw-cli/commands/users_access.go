@@ -122,6 +122,8 @@ var (
 				return errNoAPIKeyRights
 			}
 
+			expiry, _ := cmd.Flags().GetString("expiry")
+
 			is, err := api.Dial(ctx, config.IdentityServerGRPCAddress)
 			if err != nil {
 				return err
@@ -130,6 +132,7 @@ var (
 				UserIdentifiers: *usrID,
 				Name:            name,
 				Rights:          rights,
+				Expiry:          expiry,
 			})
 			if err != nil {
 				return err
@@ -257,6 +260,7 @@ func init() {
 	userAPIKeys.AddCommand(userAPIKeysGet)
 	userAPIKeysCreate.Flags().String("name", "", "")
 	userAPIKeysCreate.Flags().AddFlagSet(userRightsFlags)
+	userAPIKeysCreate.Flags().String("expiry", "", "API key expiry date (YYYY-MM-DD)")
 	userAPIKeys.AddCommand(userAPIKeysCreate)
 	userAPIKeysUpdate.Flags().String("api-key-id", "", "")
 	userAPIKeysUpdate.Flags().String("name", "", "")
