@@ -5012,6 +5012,15 @@
       "file": "user_registry.go"
     }
   },
+  "error:pkg/identityserver:api_key_expired": {
+    "translations": {
+      "en": "api key expired"
+    },
+    "description": {
+      "package": "pkg/identityserver",
+      "file": "entity_access.go"
+    }
+  },
   "error:pkg/identityserver:api_key_not_found": {
     "translations": {
       "en": "API key not found"
@@ -5073,6 +5082,24 @@
     "description": {
       "package": "pkg/identityserver",
       "file": "picture.go"
+    }
+  },
+  "error:pkg/identityserver:expiry_date_format_invalid": {
+    "translations": {
+      "en": "invalid expiry date format (use YYYY-MM-DD)"
+    },
+    "description": {
+      "package": "pkg/identityserver",
+      "file": "api_key_utils.go"
+    }
+  },
+  "error:pkg/identityserver:expiry_date_invalid": {
+    "translations": {
+      "en": "expiry date is in the past"
+    },
+    "description": {
+      "package": "pkg/identityserver",
+      "file": "api_key_utils.go"
     }
   },
   "error:pkg/identityserver:gateway_eui_taken": {
