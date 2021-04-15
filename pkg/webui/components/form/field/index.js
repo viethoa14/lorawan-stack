@@ -27,6 +27,8 @@ import PropTypes from '@ttn-lw/lib/prop-types'
 
 import FormContext from '../context'
 
+import Tooltip from './tooltip'
+
 import style from './field.styl'
 
 export const getPassThroughProps = (props, excludeProps) => {
@@ -230,6 +232,11 @@ class FormField extends React.Component {
       />
     ) : null
 
+    let tooltipIcon = null
+    if (hasGlossaryTerm) {
+      tooltipIcon = <Tooltip glossaryId={glossaryId} />
+    }
+
     const fieldComponentProps = {
       value: fieldValue,
       error: showError,
@@ -264,7 +271,7 @@ class FormField extends React.Component {
               className={style.title}
               htmlFor={fieldComponentProps.id}
             />
-            {glossaryIcon}
+            {tooltipIcon}
           </div>
         )}
         <div className={style.componentArea}>
