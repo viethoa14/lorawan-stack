@@ -30,15 +30,15 @@ const AS_923 = "AS_923"
 func init() {
 	defaultChannels := []Channel{
 		{
-			Frequency:   923200000,
+			Frequency:   921400000,
 			MaxDataRate: ttnpb.DATA_RATE_5,
 		},
 		{
-			Frequency:   923400000,
+			Frequency:   921600000,
 			MaxDataRate: ttnpb.DATA_RATE_5,
 		},
 	}
-	const beaconFrequency = 923400000
+	const beaconFrequency = 921600000
 
 	as_923 = Band{
 		ID: AS_923,
@@ -53,8 +53,8 @@ func init() {
 
 		SubBands: []SubBandParameters{
 			{
-				MinFrequency: 923000000,
-				MaxFrequency: 923500000,
+				MinFrequency: 920000000,
+				MaxFrequency: 923000000,
 				DutyCycle:    0.01,
 				MaxEIRP:      16,
 			},
@@ -124,7 +124,7 @@ func init() {
 		GenerateChMasks: generateChMask16,
 		ParseChMask:     parseChMask16,
 
-		DefaultRx2Parameters: Rx2Parameters{ttnpb.DATA_RATE_2, 923200000},
+		DefaultRx2Parameters: Rx2Parameters{ttnpb.DATA_RATE_2, 921400000},
 
 		Beacon: Beacon{
 			DataRateIndex:    ttnpb.DATA_RATE_3,
