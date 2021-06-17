@@ -15,6 +15,7 @@
 package oauth
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/url"
@@ -154,7 +155,7 @@ func (s *server) Authorize(authorizePage echo.HandlerFunc) echo.HandlerFunc {
 			}
 		}
 		if ar.Authorized {
-			events.Publish(evtAuthorize.NewWithIdentifiersAndData(req.Context(), ttnpb.CombineIdentifiers(session.UserIdentifiers, client.ClientIdentifiers), nil))
+			events.Publish(evtAuthorize.New(req.Context(), events.WithIdentifiers(&session.UserIdentifiers, &client.ClientIdentifiers)))
 		}
 		oauth2.FinishAuthorizeRequest(resp, req, ar)
 		return s.output(c, resp)
@@ -168,6 +169,47 @@ type tokenRequest struct {
 	RedirectURI  string `json:"redirect_uri" form:"redirect_uri"`
 	ClientID     string `json:"client_id" form:"client_id"`
 	ClientSecret string `json:"client_secret" form:"client_secret"`
+}
+
+var (
+	errMissingGrantType         = errors.DefineInvalidArgument("missing_grant_type", "missing grant type")
+	errInvalidGrantType         = errors.DefineInvalidArgument("invalid_grant_type", "invalid grant type `{grant_type}`")
+	errMissingAuthorizationCode = errors.DefineInvalidArgument("missing_authorization_code", "missing authorization code")
+	errMissingRefreshToken      = errors.DefineInvalidArgument("missing_refresh_token", "missing refresh token")
+	errMissingClientID          = errors.DefineInvalidArgument("missing_client_id", "missing client id")
+	errMissingClientSecret      = errors.DefineInvalidArgument("missing_client_secret", "missing client secret")
+)
+
+// ValidateContext validates the token request.
+func (req *tokenRequest) ValidateContext(ctx context.Context) error {
+	if strings.TrimSpace(req.GrantType) == "" {
+		return errMissingGrantType.New()
+	}
+	switch req.GrantType {
+	case "authorization_code":
+		if strings.TrimSpace(req.Code) == "" {
+			return errMissingAuthorizationCode.New()
+		}
+	case "refresh_token":
+		if strings.TrimSpace(req.RefreshToken) == "" {
+			return errMissingRefreshToken.New()
+		}
+	default:
+		return errInvalidGrantType.WithAttributes("grant_type", req.GrantType)
+	}
+	if strings.TrimSpace(req.ClientID) == "" {
+		return errMissingClientID.New()
+	}
+	if strings.TrimSpace(req.ClientSecret) == "" &&
+		req.ClientID != "cli" { // NOTE: Compatibility: The CLI does not have a client secret.
+		return errMissingClientSecret.New()
+	}
+	if err := (&ttnpb.ClientIdentifiers{
+		ClientID: req.ClientID,
+	}).ValidateFields("client_id"); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (r tokenRequest) Values() (values url.Values) {
@@ -197,6 +239,10 @@ func (s *server) Token(c echo.Context) error {
 	if err := c.Bind(&tokenRequest); err != nil {
 		return err
 	}
+	if err := tokenRequest.ValidateContext(c.Request().Context()); err != nil {
+		return err
+	}
+
 	req.Form = tokenRequest.Values()
 	req.PostForm = req.Form
 
@@ -225,7 +271,7 @@ func (s *server) Token(c echo.Context) error {
 		}
 	}
 	if ar.Authorized {
-		events.Publish(evtTokenExchange.NewWithIdentifiersAndData(req.Context(), ttnpb.CombineIdentifiers(userIDs, client.ClientIdentifiers), nil))
+		events.Publish(evtTokenExchange.New(req.Context(), events.WithIdentifiers(&userIDs, &client.ClientIdentifiers)))
 	}
 	oauth2.FinishAccessRequest(resp, req, ar)
 	delete(resp.Output, "scope")

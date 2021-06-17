@@ -55,13 +55,14 @@ func TestCluster(t *testing.T) {
 	go grpc.NewServer().Serve(lis)
 
 	config := Config{
-		Address:           lis.Addr().String(),
-		IdentityServer:    lis.Addr().String(),
-		GatewayServer:     lis.Addr().String(),
-		NetworkServer:     lis.Addr().String(),
-		ApplicationServer: lis.Addr().String(),
-		JoinServer:        lis.Addr().String(),
-		Join:              []string{lis.Addr().String()},
+		Address:                    lis.Addr().String(),
+		IdentityServer:             lis.Addr().String(),
+		GatewayServer:              lis.Addr().String(),
+		NetworkServer:              lis.Addr().String(),
+		ApplicationServer:          lis.Addr().String(),
+		JoinServer:                 lis.Addr().String(),
+		GatewayConfigurationServer: lis.Addr().String(),
+		Join:                       []string{lis.Addr().String()},
 	}
 
 	ctx := test.Context()
@@ -101,16 +102,19 @@ func TestCluster(t *testing.T) {
 	js, err := c.GetPeer(ctx, ttnpb.ClusterRole_JOIN_SERVER, nil)
 	a.So(js, should.NotBeNil)
 	a.So(err, should.BeNil)
+	gcs, err := c.GetPeer(ctx, ttnpb.ClusterRole_GATEWAY_CONFIGURATION_SERVER, nil)
+	a.So(gcs, should.NotBeNil)
+	a.So(err, should.BeNil)
 
 	// Test Packet Broker Agent override; Packet Broker Agent is not in the cluster.
-	pba, err := c.GetPeer(ctx, ttnpb.ClusterRole_GATEWAY_SERVER, PacketBrokerGatewayID)
+	pba, err := c.GetPeer(ctx, ttnpb.ClusterRole_GATEWAY_SERVER, &PacketBrokerGatewayID)
 	a.So(pba, should.BeNil)
 	a.So(err, should.NotBeNil)
 
 	a.So(c.Leave(), should.BeNil)
 
 	for _, peer := range []Peer{
-		ac, er, gs, ns, as, js,
+		ac, er, gs, ns, as, js, gcs,
 	} {
 		cc, err := peer.Conn()
 		a.So(cc, should.NotBeNil)

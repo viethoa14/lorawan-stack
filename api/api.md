@@ -144,6 +144,8 @@
   - [Service `EndDeviceClaimingServer`](#ttn.lorawan.v3.EndDeviceClaimingServer)
   - [Service `GatewayClaimingServer`](#ttn.lorawan.v3.GatewayClaimingServer)
 - [File `lorawan-stack/api/devicerepository.proto`](#lorawan-stack/api/devicerepository.proto)
+  - [Message `DecodedMessagePayload`](#ttn.lorawan.v3.DecodedMessagePayload)
+  - [Message `EncodedMessagePayload`](#ttn.lorawan.v3.EncodedMessagePayload)
   - [Message `EndDeviceBrand`](#ttn.lorawan.v3.EndDeviceBrand)
   - [Message `EndDeviceModel`](#ttn.lorawan.v3.EndDeviceModel)
   - [Message `EndDeviceModel.Battery`](#ttn.lorawan.v3.EndDeviceModel.Battery)
@@ -167,7 +169,10 @@
   - [Message `ListEndDeviceBrandsResponse`](#ttn.lorawan.v3.ListEndDeviceBrandsResponse)
   - [Message `ListEndDeviceModelsRequest`](#ttn.lorawan.v3.ListEndDeviceModelsRequest)
   - [Message `ListEndDeviceModelsResponse`](#ttn.lorawan.v3.ListEndDeviceModelsResponse)
-  - [Message `MessagePayloadFormatter`](#ttn.lorawan.v3.MessagePayloadFormatter)
+  - [Message `MessagePayloadDecoder`](#ttn.lorawan.v3.MessagePayloadDecoder)
+  - [Message `MessagePayloadDecoder.Example`](#ttn.lorawan.v3.MessagePayloadDecoder.Example)
+  - [Message `MessagePayloadEncoder`](#ttn.lorawan.v3.MessagePayloadEncoder)
+  - [Message `MessagePayloadEncoder.Example`](#ttn.lorawan.v3.MessagePayloadEncoder.Example)
   - [Enum `KeyProvisioning`](#ttn.lorawan.v3.KeyProvisioning)
   - [Enum `KeySecurity`](#ttn.lorawan.v3.KeySecurity)
   - [Service `DeviceRepository`](#ttn.lorawan.v3.DeviceRepository)
@@ -266,7 +271,6 @@
 - [File `lorawan-stack/api/identifiers.proto`](#lorawan-stack/api/identifiers.proto)
   - [Message `ApplicationIdentifiers`](#ttn.lorawan.v3.ApplicationIdentifiers)
   - [Message `ClientIdentifiers`](#ttn.lorawan.v3.ClientIdentifiers)
-  - [Message `CombinedIdentifiers`](#ttn.lorawan.v3.CombinedIdentifiers)
   - [Message `EndDeviceIdentifiers`](#ttn.lorawan.v3.EndDeviceIdentifiers)
   - [Message `EntityIdentifiers`](#ttn.lorawan.v3.EntityIdentifiers)
   - [Message `GatewayIdentifiers`](#ttn.lorawan.v3.GatewayIdentifiers)
@@ -389,6 +393,7 @@
   - [Enum `DataRateIndex`](#ttn.lorawan.v3.DataRateIndex)
   - [Enum `DataRateOffset`](#ttn.lorawan.v3.DataRateOffset)
   - [Enum `DeviceEIRP`](#ttn.lorawan.v3.DeviceEIRP)
+  - [Enum `JoinRequestType`](#ttn.lorawan.v3.JoinRequestType)
   - [Enum `MACCommandIdentifier`](#ttn.lorawan.v3.MACCommandIdentifier)
   - [Enum `MACVersion`](#ttn.lorawan.v3.MACVersion)
   - [Enum `MType`](#ttn.lorawan.v3.MType)
@@ -398,8 +403,8 @@
   - [Enum `PingSlotPeriod`](#ttn.lorawan.v3.PingSlotPeriod)
   - [Enum `RejoinCountExponent`](#ttn.lorawan.v3.RejoinCountExponent)
   - [Enum `RejoinPeriodExponent`](#ttn.lorawan.v3.RejoinPeriodExponent)
+  - [Enum `RejoinRequestType`](#ttn.lorawan.v3.RejoinRequestType)
   - [Enum `RejoinTimeExponent`](#ttn.lorawan.v3.RejoinTimeExponent)
-  - [Enum `RejoinType`](#ttn.lorawan.v3.RejoinType)
   - [Enum `RxDelay`](#ttn.lorawan.v3.RxDelay)
   - [Enum `TxSchedulePriority`](#ttn.lorawan.v3.TxSchedulePriority)
 - [File `lorawan-stack/api/message_services.proto`](#lorawan-stack/api/message_services.proto)
@@ -2387,6 +2392,38 @@ and allows clients to claim end devices.
 
 ## <a name="lorawan-stack/api/devicerepository.proto">File `lorawan-stack/api/devicerepository.proto`</a>
 
+### <a name="ttn.lorawan.v3.DecodedMessagePayload">Message `DecodedMessagePayload`</a>
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `data` | [`google.protobuf.Struct`](#google.protobuf.Struct) |  |  |
+| `warnings` | [`string`](#string) | repeated |  |
+| `errors` | [`string`](#string) | repeated |  |
+
+#### Field Rules
+
+| Field | Validations |
+| ----- | ----------- |
+| `warnings` | <p>`repeated.max_items`: `10`</p><p>`repeated.items.string.max_len`: `100`</p> |
+| `errors` | <p>`repeated.max_items`: `10`</p><p>`repeated.items.string.max_len`: `100`</p> |
+
+### <a name="ttn.lorawan.v3.EncodedMessagePayload">Message `EncodedMessagePayload`</a>
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `f_port` | [`uint32`](#uint32) |  |  |
+| `frm_payload` | [`bytes`](#bytes) |  |  |
+| `warnings` | [`string`](#string) | repeated |  |
+| `errors` | [`string`](#string) | repeated |  |
+
+#### Field Rules
+
+| Field | Validations |
+| ----- | ----------- |
+| `f_port` | <p>`uint32.lte`: `255`</p> |
+| `warnings` | <p>`repeated.max_items`: `10`</p><p>`repeated.items.string.max_len`: `100`</p> |
+| `errors` | <p>`repeated.max_items`: `10`</p><p>`repeated.items.string.max_len`: `100`</p> |
+
 ### <a name="ttn.lorawan.v3.EndDeviceBrand">Message `EndDeviceBrand`</a>
 
 | Field | Type | Label | Description |
@@ -2577,6 +2614,7 @@ and allows clients to claim end devices.
 | ----- | ---- | ----- | ----------- |
 | `application_ids` | [`ApplicationIdentifiers`](#ttn.lorawan.v3.ApplicationIdentifiers) |  | Application identifiers. |
 | `version_ids` | [`EndDeviceVersionIdentifiers`](#ttn.lorawan.v3.EndDeviceVersionIdentifiers) |  | End device version information. |
+| `field_mask` | [`google.protobuf.FieldMask`](#google.protobuf.FieldMask) |  | Field mask paths. |
 
 ### <a name="ttn.lorawan.v3.GetTemplateRequest">Message `GetTemplateRequest`</a>
 
@@ -2637,18 +2675,67 @@ and allows clients to claim end devices.
 | ----- | ---- | ----- | ----------- |
 | `models` | [`EndDeviceModel`](#ttn.lorawan.v3.EndDeviceModel) | repeated |  |
 
-### <a name="ttn.lorawan.v3.MessagePayloadFormatter">Message `MessagePayloadFormatter`</a>
+### <a name="ttn.lorawan.v3.MessagePayloadDecoder">Message `MessagePayloadDecoder`</a>
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | `formatter` | [`PayloadFormatter`](#ttn.lorawan.v3.PayloadFormatter) |  | Payload formatter type. |
 | `formatter_parameter` | [`string`](#string) |  | Parameter for the formatter, must be set together. |
+| `codec_id` | [`string`](#string) |  |  |
+| `examples` | [`MessagePayloadDecoder.Example`](#ttn.lorawan.v3.MessagePayloadDecoder.Example) | repeated |  |
 
 #### Field Rules
 
 | Field | Validations |
 | ----- | ----------- |
 | `formatter` | <p>`enum.defined_only`: `true`</p> |
+| `codec_id` | <p>`string.max_len`: `36`</p><p>`string.pattern`: `^([a-z0-9](?:[-]?[a-z0-9]){2,}|)?$`</p> |
+| `examples` | <p>`repeated.max_items`: `20`</p> |
+
+### <a name="ttn.lorawan.v3.MessagePayloadDecoder.Example">Message `MessagePayloadDecoder.Example`</a>
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `description` | [`string`](#string) |  |  |
+| `input` | [`EncodedMessagePayload`](#ttn.lorawan.v3.EncodedMessagePayload) |  |  |
+| `output` | [`DecodedMessagePayload`](#ttn.lorawan.v3.DecodedMessagePayload) |  |  |
+
+#### Field Rules
+
+| Field | Validations |
+| ----- | ----------- |
+| `description` | <p>`string.max_len`: `200`</p> |
+
+### <a name="ttn.lorawan.v3.MessagePayloadEncoder">Message `MessagePayloadEncoder`</a>
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `formatter` | [`PayloadFormatter`](#ttn.lorawan.v3.PayloadFormatter) |  | Payload formatter type. |
+| `formatter_parameter` | [`string`](#string) |  | Parameter for the formatter, must be set together. |
+| `codec_id` | [`string`](#string) |  |  |
+| `examples` | [`MessagePayloadEncoder.Example`](#ttn.lorawan.v3.MessagePayloadEncoder.Example) | repeated |  |
+
+#### Field Rules
+
+| Field | Validations |
+| ----- | ----------- |
+| `formatter` | <p>`enum.defined_only`: `true`</p> |
+| `codec_id` | <p>`string.max_len`: `36`</p><p>`string.pattern`: `^([a-z0-9](?:[-]?[a-z0-9]){2,}|)?$`</p> |
+| `examples` | <p>`repeated.max_items`: `20`</p> |
+
+### <a name="ttn.lorawan.v3.MessagePayloadEncoder.Example">Message `MessagePayloadEncoder.Example`</a>
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `description` | [`string`](#string) |  |  |
+| `input` | [`DecodedMessagePayload`](#ttn.lorawan.v3.DecodedMessagePayload) |  |  |
+| `output` | [`EncodedMessagePayload`](#ttn.lorawan.v3.EncodedMessagePayload) |  |  |
+
+#### Field Rules
+
+| Field | Validations |
+| ----- | ----------- |
+| `description` | <p>`string.max_len`: `200`</p> |
 
 ### <a name="ttn.lorawan.v3.KeyProvisioning">Enum `KeyProvisioning`</a>
 
@@ -2677,9 +2764,9 @@ and allows clients to claim end devices.
 | `ListModels` | [`ListEndDeviceModelsRequest`](#ttn.lorawan.v3.ListEndDeviceModelsRequest) | [`ListEndDeviceModelsResponse`](#ttn.lorawan.v3.ListEndDeviceModelsResponse) |  |
 | `GetModel` | [`GetEndDeviceModelRequest`](#ttn.lorawan.v3.GetEndDeviceModelRequest) | [`EndDeviceModel`](#ttn.lorawan.v3.EndDeviceModel) |  |
 | `GetTemplate` | [`GetTemplateRequest`](#ttn.lorawan.v3.GetTemplateRequest) | [`EndDeviceTemplate`](#ttn.lorawan.v3.EndDeviceTemplate) |  |
-| `GetUplinkDecoder` | [`GetPayloadFormatterRequest`](#ttn.lorawan.v3.GetPayloadFormatterRequest) | [`MessagePayloadFormatter`](#ttn.lorawan.v3.MessagePayloadFormatter) |  |
-| `GetDownlinkDecoder` | [`GetPayloadFormatterRequest`](#ttn.lorawan.v3.GetPayloadFormatterRequest) | [`MessagePayloadFormatter`](#ttn.lorawan.v3.MessagePayloadFormatter) |  |
-| `GetDownlinkEncoder` | [`GetPayloadFormatterRequest`](#ttn.lorawan.v3.GetPayloadFormatterRequest) | [`MessagePayloadFormatter`](#ttn.lorawan.v3.MessagePayloadFormatter) |  |
+| `GetUplinkDecoder` | [`GetPayloadFormatterRequest`](#ttn.lorawan.v3.GetPayloadFormatterRequest) | [`MessagePayloadDecoder`](#ttn.lorawan.v3.MessagePayloadDecoder) |  |
+| `GetDownlinkDecoder` | [`GetPayloadFormatterRequest`](#ttn.lorawan.v3.GetPayloadFormatterRequest) | [`MessagePayloadDecoder`](#ttn.lorawan.v3.MessagePayloadDecoder) |  |
+| `GetDownlinkEncoder` | [`GetPayloadFormatterRequest`](#ttn.lorawan.v3.GetPayloadFormatterRequest) | [`MessagePayloadEncoder`](#ttn.lorawan.v3.MessagePayloadEncoder) |  |
 
 #### HTTP bindings
 
@@ -4056,15 +4143,6 @@ The NsGs service connects a Network Server to a Gateway Server.
 | ----- | ----------- |
 | `client_id` | <p>`string.max_len`: `36`</p><p>`string.pattern`: `^[a-z0-9](?:[-]?[a-z0-9]){2,}$`</p> |
 
-### <a name="ttn.lorawan.v3.CombinedIdentifiers">Message `CombinedIdentifiers`</a>
-
-Combine the identifiers of multiple entities.
-The main purpose of this message is its use in events.
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| `entity_identifiers` | [`EntityIdentifiers`](#ttn.lorawan.v3.EntityIdentifiers) | repeated |  |
-
 ### <a name="ttn.lorawan.v3.EndDeviceIdentifiers">Message `EndDeviceIdentifiers`</a>
 
 | Field | Type | Label | Description |
@@ -4421,7 +4499,7 @@ OrganizationOrUserIdentifiers contains either organization or user identifiers.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | `payload_request` | [`CryptoServicePayloadRequest`](#ttn.lorawan.v3.CryptoServicePayloadRequest) |  | Request data for the cryptographic operation. |
-| `join_request_type` | [`RejoinType`](#ttn.lorawan.v3.RejoinType) |  | LoRaWAN rejoin-request type. |
+| `join_request_type` | [`JoinRequestType`](#ttn.lorawan.v3.JoinRequestType) |  | LoRaWAN join-request type. |
 | `dev_nonce` | [`bytes`](#bytes) |  | LoRaWAN DevNonce. |
 
 #### Field Rules
@@ -5035,7 +5113,7 @@ Only the components for which the keys were meant, will have the key-encryption-
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| `rejoin_type` | [`RejoinType`](#ttn.lorawan.v3.RejoinType) |  |  |
+| `rejoin_type` | [`RejoinRequestType`](#ttn.lorawan.v3.RejoinRequestType) |  |  |
 | `data_rate_index` | [`DataRateIndex`](#ttn.lorawan.v3.DataRateIndex) |  |  |
 | `max_retries` | [`uint32`](#uint32) |  |  |
 | `period_exponent` | [`RejoinPeriodExponent`](#ttn.lorawan.v3.RejoinPeriodExponent) |  | Exponent e that configures the rejoin period = 32 * 2^e + rand(0,32) seconds. |
@@ -5334,7 +5412,7 @@ Message represents a LoRaWAN message
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| `rejoin_type` | [`RejoinType`](#ttn.lorawan.v3.RejoinType) |  |  |
+| `rejoin_type` | [`RejoinRequestType`](#ttn.lorawan.v3.RejoinRequestType) |  |  |
 | `net_id` | [`bytes`](#bytes) |  |  |
 | `join_eui` | [`bytes`](#bytes) |  |  |
 | `dev_eui` | [`bytes`](#bytes) |  |  |
@@ -5571,6 +5649,15 @@ Transmission settings for downlink.
 | `DEVICE_EIRP_33` | 14 | 33 dBm. |
 | `DEVICE_EIRP_36` | 15 | 36 dBm. |
 
+### <a name="ttn.lorawan.v3.JoinRequestType">Enum `JoinRequestType`</a>
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| `REJOIN_CONTEXT` | 0 | Resets DevAddr, Session Keys, Frame Counters, Radio Parameters. |
+| `REJOIN_SESSION` | 1 | Equivalent to the initial JoinRequest. |
+| `REJOIN_KEYS` | 2 | Resets DevAddr, Session Keys, Frame Counters, while keeping the Radio Parameters. |
+| `JOIN` | 255 | Normal join-request. |
+
 ### <a name="ttn.lorawan.v3.MACCommandIdentifier">Enum `MACCommandIdentifier`</a>
 
 | Name | Number | Description |
@@ -5709,6 +5796,14 @@ Transmission settings for downlink.
 | `REJOIN_PERIOD_6` | 6 | Every 2048 to 2080 seconds. |
 | `REJOIN_PERIOD_7` | 7 | Every 4096 to 4128 seconds. |
 
+### <a name="ttn.lorawan.v3.RejoinRequestType">Enum `RejoinRequestType`</a>
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| `CONTEXT` | 0 | Resets DevAddr, Session Keys, Frame Counters, Radio Parameters. |
+| `SESSION` | 1 | Equivalent to the initial JoinRequest. |
+| `KEYS` | 2 | Resets DevAddr, Session Keys, Frame Counters, while keeping the Radio Parameters. |
+
 ### <a name="ttn.lorawan.v3.RejoinTimeExponent">Enum `RejoinTimeExponent`</a>
 
 | Name | Number | Description |
@@ -5729,14 +5824,6 @@ Transmission settings for downlink.
 | `REJOIN_TIME_13` | 13 | Every ~3.2 months. |
 | `REJOIN_TIME_14` | 14 | Every ~6.4 months. |
 | `REJOIN_TIME_15` | 15 | Every ~1.1 year. |
-
-### <a name="ttn.lorawan.v3.RejoinType">Enum `RejoinType`</a>
-
-| Name | Number | Description |
-| ---- | ------ | ----------- |
-| `CONTEXT` | 0 | Resets DevAddr, Session Keys, Frame Counters, Radio Parameters. |
-| `SESSION` | 1 | Equivalent to the initial JoinRequest. |
-| `KEYS` | 2 | Resets DevAddr, Session Keys, Frame Counters, while keeping the Radio Parameters. |
 
 ### <a name="ttn.lorawan.v3.RxDelay">Enum `RxDelay`</a>
 

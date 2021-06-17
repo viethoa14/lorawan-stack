@@ -64,6 +64,7 @@ type ApplicationServer struct {
 
 	linkRegistry     LinkRegistry
 	deviceRegistry   DeviceRegistry
+	appUpsRegistry   ApplicationUplinkRegistry
 	formatters       messageprocessors.MapPayloadProcessor
 	webhooks         web.Webhooks
 	webhookTemplates web.TemplateStore
@@ -124,6 +125,7 @@ func New(c *component.Component, conf *Config) (as *ApplicationServer, err error
 		config:         conf,
 		linkRegistry:   conf.Links,
 		deviceRegistry: wrapEndDeviceRegistryWithReplacedFields(conf.Devices, replacedEndDeviceFields...),
+		appUpsRegistry: conf.UplinkStorage.Registry,
 		formatters: messageprocessors.MapPayloadProcessor{
 			ttnpb.PayloadFormatter_FORMATTER_JAVASCRIPT: javascript.New(),
 			ttnpb.PayloadFormatter_FORMATTER_CAYENNELPP: cayennelpp.New(),
@@ -399,6 +401,12 @@ func (as *ApplicationServer) buildSessionsFromError(ctx context.Context, dev *tt
 	var mask []string
 	if diagnostics.DevAddr != nil {
 		switch {
+		// If the SessionKeyID and DevAddr did not change, just update the LastAFCntDown.
+		case dev.Session != nil &&
+			bytes.Equal(diagnostics.SessionKeyID, dev.Session.SessionKeyID) &&
+			dev.Session.DevAddr.Equal(*diagnostics.DevAddr):
+			dev.Session.LastAFCntDown = diagnostics.MinFCntDown
+		// If there is a SessionKeyID on the Network Server side, rebuild the session.
 		case len(diagnostics.SessionKeyID) > 0:
 			session, err := reconstructSession(diagnostics.SessionKeyID, diagnostics.DevAddr, diagnostics.MinFCntDown)
 			if err != nil {
@@ -406,8 +414,6 @@ func (as *ApplicationServer) buildSessionsFromError(ctx context.Context, dev *tt
 			}
 			dev.Session = session
 			dev.DevAddr = &session.DevAddr
-		case dev.Session != nil && dev.Session.DevAddr.Equal(*diagnostics.DevAddr):
-			dev.Session.LastAFCntDown = diagnostics.MinFCntDown
 		default:
 			return nil, errRebuild.New()
 		}
@@ -418,11 +424,22 @@ func (as *ApplicationServer) buildSessionsFromError(ctx context.Context, dev *tt
 	mask = append(mask, "session", "ids.dev_addr")
 
 	if diagnostics.PendingDevAddr != nil {
-		session, err := reconstructSession(diagnostics.PendingSessionKeyID, diagnostics.PendingDevAddr, diagnostics.PendingMinFCntDown)
-		if err != nil {
-			return nil, err
+		switch {
+		// If the SessionKeyID did not change, just update the LastAFcntDown.
+		case dev.PendingSession != nil &&
+			bytes.Equal(diagnostics.PendingSessionKeyID, dev.PendingSession.SessionKeyID) &&
+			dev.PendingSession.DevAddr.Equal(*diagnostics.PendingDevAddr):
+			dev.PendingSession.LastAFCntDown = diagnostics.PendingMinFCntDown
+		// If there is a SessionKeyID on the Network Server side, rebuild the session.
+		case len(diagnostics.PendingSessionKeyID) > 0:
+			session, err := reconstructSession(diagnostics.PendingSessionKeyID, diagnostics.PendingDevAddr, diagnostics.PendingMinFCntDown)
+			if err != nil {
+				return nil, err
+			}
+			dev.PendingSession = session
+		default:
+			return nil, errRebuild.New()
 		}
-		dev.PendingSession = session
 	} else {
 		dev.PendingSession = nil
 	}
@@ -442,7 +459,7 @@ func (as *ApplicationServer) downlinkQueueOp(ctx context.Context, ids ttnpb.EndD
 	for _, item := range items {
 		registerReceiveDownlink(ctx, ids, item)
 	}
-	peer, err := as.GetPeer(ctx, ttnpb.ClusterRole_NETWORK_SERVER, ids)
+	peer, err := as.GetPeer(ctx, ttnpb.ClusterRole_NETWORK_SERVER, &ids)
 	if err != nil {
 		return err
 	}
@@ -611,7 +628,7 @@ func (as *ApplicationServer) DownlinkQueueList(ctx context.Context, ids ttnpb.En
 	if err != nil {
 		return nil, err
 	}
-	pc, err := as.GetPeerConn(ctx, ttnpb.ClusterRole_NETWORK_SERVER, ids)
+	pc, err := as.GetPeerConn(ctx, ttnpb.ClusterRole_NETWORK_SERVER, &ids)
 	if err != nil {
 		return nil, err
 	}
@@ -656,7 +673,7 @@ func (as *ApplicationServer) fetchAppSKey(ctx context.Context, ids ttnpb.EndDevi
 		DevEUI:       *ids.DevEUI,
 		JoinEUI:      *ids.JoinEUI,
 	}
-	if js, err := as.GetPeer(ctx, ttnpb.ClusterRole_JOIN_SERVER, ids); err == nil {
+	if js, err := as.GetPeer(ctx, ttnpb.ClusterRole_JOIN_SERVER, &ids); err == nil {
 		cc, err := js.Conn()
 		if err != nil {
 			return ttnpb.KeyEnvelope{}, err
@@ -790,7 +807,7 @@ func (as *ApplicationServer) handleJoinAccept(ctx context.Context, ids ttnpb.End
 // resetInvalidDownlinkQueue clears the invalid downlink queue of the provided device and publishes the appropriate events.
 func (as *ApplicationServer) resetInvalidDownlinkQueue(ctx context.Context, ids ttnpb.EndDeviceIdentifiers) error {
 	logger := log.FromContext(ctx)
-	pc, err := as.GetPeerConn(ctx, ttnpb.ClusterRole_NETWORK_SERVER, ids)
+	pc, err := as.GetPeerConn(ctx, ttnpb.ClusterRole_NETWORK_SERVER, &ids)
 	if err != nil {
 		return err
 	}
@@ -801,9 +818,9 @@ func (as *ApplicationServer) resetInvalidDownlinkQueue(ctx context.Context, ids 
 	_, err = client.DownlinkQueueReplace(ctx, req, as.WithClusterAuth())
 	if err != nil {
 		logger.WithError(err).Warn("Failed to clear the downlink queue; any queued items in the Network Server are invalid")
-		events.Publish(evtInvalidQueueDataDown.NewWithIdentifiersAndData(ctx, ids, err))
+		events.Publish(evtInvalidQueueDataDown.NewWithIdentifiersAndData(ctx, &ids, err))
 	} else {
-		events.Publish(evtLostQueueDataDown.NewWithIdentifiersAndData(ctx, ids, err))
+		events.Publish(evtLostQueueDataDown.NewWithIdentifiersAndData(ctx, &ids, err))
 	}
 	return err
 }
@@ -890,7 +907,7 @@ func (as *ApplicationServer) recalculatePendingDownlinkQueue(ctx context.Context
 			return err
 		}
 
-		pc, err := as.GetPeerConn(ctx, ttnpb.ClusterRole_NETWORK_SERVER, dev.ApplicationIdentifiers)
+		pc, err := as.GetPeerConn(ctx, ttnpb.ClusterRole_NETWORK_SERVER, &dev.ApplicationIdentifiers)
 		if err != nil {
 			return err
 		}
@@ -934,7 +951,7 @@ func (as *ApplicationServer) recalculateDownlinkQueue(ctx context.Context, dev *
 			return nil
 		}
 
-		pc, err := as.GetPeerConn(ctx, ttnpb.ClusterRole_NETWORK_SERVER, dev.ApplicationIdentifiers)
+		pc, err := as.GetPeerConn(ctx, ttnpb.ClusterRole_NETWORK_SERVER, &dev.ApplicationIdentifiers)
 		if err != nil {
 			return err
 		}
@@ -1051,7 +1068,7 @@ matchSession:
 		// Next AFCntDown 1 is assumed. If this is a LoRaWAN 1.0.x end device and the Network Server sent MAC layer
 		// downlink already, the Network Server will trigger the DownlinkQueueInvalidated event. Therefore, this
 		// recalculation may result in another recalculation.
-		pc, err := as.GetPeerConn(ctx, ttnpb.ClusterRole_NETWORK_SERVER, ids)
+		pc, err := as.GetPeerConn(ctx, ttnpb.ClusterRole_NETWORK_SERVER, &ids)
 		if err != nil {
 			return nil, err
 		}
@@ -1068,6 +1085,26 @@ matchSession:
 		}
 	}
 	return mask, nil
+}
+
+func (as *ApplicationServer) storeUplink(ctx context.Context, ids ttnpb.EndDeviceIdentifiers, uplink *ttnpb.ApplicationUplink) error {
+	cleanUplink := &ttnpb.ApplicationUplink{
+		RxMetadata: make([]*ttnpb.RxMetadata, 0, len(uplink.RxMetadata)),
+		ReceivedAt: uplink.ReceivedAt,
+	}
+	for _, md := range uplink.RxMetadata {
+		cleanUplink.RxMetadata = append(cleanUplink.RxMetadata, &ttnpb.RxMetadata{
+			GatewayIdentifiers: ttnpb.GatewayIdentifiers{
+				GatewayID: md.GatewayID,
+			},
+			AntennaIndex:  md.AntennaIndex,
+			FineTimestamp: md.FineTimestamp,
+			Location:      md.Location,
+			RSSI:          md.RSSI,
+			SNR:           md.SNR,
+		})
+	}
+	return as.appUpsRegistry.Push(ctx, ids, cleanUplink)
 }
 
 func (as *ApplicationServer) handleUplink(ctx context.Context, ids ttnpb.EndDeviceIdentifiers, uplink *ttnpb.ApplicationUplink, link *ttnpb.ApplicationLink) error {
@@ -1099,6 +1136,9 @@ func (as *ApplicationServer) handleUplink(ctx context.Context, ids ttnpb.EndDevi
 	}
 	if !as.skipPayloadCrypto(ctx, link, dev, dev.Session) {
 		if err := as.decryptAndDecodeUplink(ctx, dev, uplink, link.DefaultFormatters); err != nil {
+			return err
+		}
+		if err := as.storeUplink(ctx, ids, uplink); err != nil {
 			return err
 		}
 	} else if dev.Session != nil && dev.Session.AppSKey != nil {
@@ -1192,7 +1232,7 @@ func (as *ApplicationServer) handleDownlinkQueueInvalidated(ctx context.Context,
 
 func (as *ApplicationServer) handleDownlinkNack(ctx context.Context, ids ttnpb.EndDeviceIdentifiers, msg *ttnpb.ApplicationDownlink, link *ttnpb.ApplicationLink) error {
 	logger := log.FromContext(ctx)
-	pc, err := as.GetPeerConn(ctx, ttnpb.ClusterRole_NETWORK_SERVER, ids)
+	pc, err := as.GetPeerConn(ctx, ttnpb.ClusterRole_NETWORK_SERVER, &ids)
 	if err != nil {
 		return err
 	}
@@ -1285,4 +1325,9 @@ func (as *ApplicationServer) GetMQTTConfig(ctx context.Context) (*config.MQTT, e
 		return nil, err
 	}
 	return &config.MQTT, nil
+}
+
+// RangeUplinks ranges the application uplinks and calls the callback function, until false is returned.
+func (as *ApplicationServer) RangeUplinks(ctx context.Context, ids ttnpb.EndDeviceIdentifiers, paths []string, f func(ctx context.Context, up *ttnpb.ApplicationUplink) bool) error {
+	return as.appUpsRegistry.Range(ctx, ids, paths, f)
 }
